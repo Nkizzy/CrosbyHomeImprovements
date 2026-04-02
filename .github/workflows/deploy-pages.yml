@@ -1,3 +1,8 @@
+# Publishes npm run build output (dist/), NOT the Vite source tree.
+#
+# Settings → Pages → Build: GitHub Actions (turn OFF “Deploy from a branch”).
+# Site URL: https://<user>.github.io/SCSidingRepair/
+
 name: Deploy site to GitHub Pages
 
 on:
@@ -7,12 +12,10 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -33,20 +36,26 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Verify dist
+        run: ls -la dist && test -f dist/index.html
+
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v5
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
-          path: ./dist
+          path: dist
 
   deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
